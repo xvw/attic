@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>As_decidable (postface.Postface_examples.Equivalence_examples.As_decidable)</title><link rel="stylesheet" href="../../../../_odoc-theme/odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 2.0.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">postface</a> &#x00BB; <a href="../../index.html">Postface_examples</a> &#x00BB; <a href="../index.html">Equivalence_examples</a> &#x00BB; As_decidable</nav><header class="odoc-preamble"><h1>Module <code><span>Equivalence_examples.As_decidable</span></code></h1><p>Examples of using Equivalence as a <a href="../../../Postface/Equivalence/Decidable/index.html"><code>Postface.Equivalence.Decidable</code></a></p><p>Using <a href="../As_divisible/index.html">Divisible</a> we observed how to compose multiple equivalences to produces a more complex equivalence that act on product types (projected into couples). As for <a href="../../Predicate_examples/As_decidable/index.html">predicates</a>, <code>Decidable</code> allows you to act on <b>sums</b>, i.e. to apply a different equivalence dependending on the branch you are in. Let's reuse our <code>int_or_float</code>:</p><pre><code># type int_or_float = Int of int | Float of float ;;
+type int_or_float = Int of int | Float of float</code></pre><p>As before, we need to project our value into a <code>either</code>. Let's use our <code>to_either</code> function again:</p><pre><code># let to_either = function Int x -&gt; Either.left x | Float x -&gt; Either.right x ;;
+val to_either : int_or_float -&gt; (int, float) Either/2.t = &lt;fun&gt;</code></pre><p>Now that we can project an arbitrary sum into the most generic sum (yes, Either is always the most generic sum), we can compose our two equivalences to selectively choose one or the other.</p><pre><code># let equal = to_either &gt;$&lt; (Int.equal &gt;|&lt; Float.equal) ;;
+val equal : int_or_float t = &lt;equivalence&gt;</code></pre><p>Now that we have composed our equivalences to choose the appropriate one according to the branch we are in, we can test our new function <code>equal</code>:</p><pre><code># equal (Int 10) (Int 10) ;;
+- : bool = true
+# equal (Int 10) (Int 11) ;;
+- : bool = false
+# equal (Float 2.5) (Float 2.5) ;;
+- : bool = true
+# equal (Float 2.0) (Int 2) ;;
+- : bool = false</code></pre><p>You will note that <code>Int 2</code> is different from <code>Float 2.0</code> because it is arbitrarily considered that two resident values in two different branches are de-facto different.</p><p>Following the same logic as for products (and for predicates), we can obviously construct a <code>to_either</code> function for sums with more than two branches:</p><pre><code># type more_than_2_branches = A of int | B of float | C of string ;;
+type more_than_2_branches = A of int | B of float | C of string</code></pre><p>A function <code>to_either</code> of this form can be produced:</p><pre><code>let to_either = function
+| A x -&gt; Either.(left (left x))
+| B x -&gt; Either.(left (right x))
+| C x -&gt; Either.right x
+;;</code></pre><p>And we can write our <code>equal</code> function in this way:</p><pre><code># let equal = to_either &gt;$&lt; (Int.equal &gt;|&lt; Float.equal &gt;|&lt; String.equal) ;;
+val equal : more_than_2_branches t = &lt;equivalence&gt;</code></pre><p>We can now test our equivalences:</p><pre><code># equal (A 10) (A 10) ;;
+- : bool = true
+# equal (B 2.0) (C &quot;foo&quot;) ;;
+- : bool = false</code></pre><p>The projection logic is broadly the same as for products.</p></header><div class="odoc-content"></div></body></html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>As_divisible (postface.Postface_examples.Equivalence_examples.As_divisible)</title><link rel="stylesheet" href="../../../../_odoc-theme/odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 2.0.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">postface</a> &#x00BB; <a href="../../index.html">Postface_examples</a> &#x00BB; <a href="../index.html">Equivalence_examples</a> &#x00BB; As_divisible</nav><header class="odoc-preamble"><h1>Module <code><span>Equivalence_examples.As_divisible</span></code></h1><p>Examples of using Equivalence as a <a href="../../../Postface/Equivalence/Divisible/index.html"><code>Postface.Equivalence.Divisible</code></a></p><p>As for <a href="../../Predicate_examples/As_divisible/index.html">predicate</a>, let's re-use our type <code>user</code>.</p><pre><code># type user = {first_name: string; last_name: string; age: int; email: string} ;;
+type user = {
+  first_name : string;
+  last_name : string;
+  age : int;
+  email : string;
+}</code></pre><p>Our aim is to provide an equivalence function between users. It is obviously possible to provide a direct implementation, but it would not take advantage of <code>Divisible</code>. To take advantage of <code>Divisible</code>, the first step is to normalise our user into a product, for this we can reuse the <code>user_to_couple</code> function we used in <a href="../../Predicate_examples/As_divisible/index.html">the predicate example</a>:</p><pre><code># let user_to_couple u = ((u.first_name, u.last_name), u.age), u.email ;;
+val user_to_couple : user -&gt; ((string * string) * int) * string = &lt;fun&gt;</code></pre><p>Now we just have to compose our equivalences to build an equivalence between users! First, let's define some helpers to make the code more digestible.</p><pre><code># let int = Stdlib.Int.equal ;;
+val int : int -&gt; int -&gt; bool = &lt;equivalence&gt;
+# let string = Stdlib.String.equal ;;
+val string : string -&gt; string -&gt; bool = &lt;equivalence&gt;</code></pre><p>Now all we have to do is project our <code>user</code> into a couple (remember, it's just <code>contramap</code> and the <code>user_to_couple</code> function), and then we can chain our various equality functions with <code>&gt;*&lt;</code>:</p><pre><code># let eq_user = user_to_couple &gt;$&lt; (string &gt;*&lt; string &gt;*&lt; int &gt;*&lt; string) ;;
+val eq_user : user t = &lt;equivalence&gt;</code></pre><p>Fine, let's create some users and check that our function works.</p><pre><code># let mk_user first_name last_name age email = {first_name; last_name; age; email} ;;
+val mk_user : string -&gt; string -&gt; int -&gt; string -&gt; user = &lt;fun&gt;</code></pre><pre><code># let xvw = mk_user &quot;Xavier&quot; &quot;Vdw.&quot; 10 &quot;xavier@mail.org&quot; ;;
+val xvw : user =
+  {first_name = &quot;Xavier&quot;; last_name = &quot;Vdw.&quot;; age = 10;
+   email = &quot;xavier@mail.org&quot;}
+# let grm = mk_user &quot;Pierre&quot; &quot;R.&quot;  20 &quot;pierre@mail.org&quot; ;;
+val grm : user =
+  {first_name = &quot;Pierre&quot;; last_name = &quot;R.&quot;; age = 20;
+   email = &quot;pierre@mail.org&quot;}
+# let dpl = mk_user &quot;Didier&quot; &quot;P.&quot; 30 &quot;didier@mail.org&quot; ;;
+val dpl : user =
+  {first_name = &quot;Didier&quot;; last_name = &quot;P.&quot;; age = 30;
+   email = &quot;didier@mail.org&quot;}</code></pre><p>Let's try our fresh equivalence. Applying the equivalence between two different users should return <code>false</code>:</p><pre><code># eq_user xvw grm ;;
+- : bool = false
+# eq_user grm dpl ;;
+- : bool = false
+# eq_user dpl xvw ;;
+- : bool = false</code></pre><p>On the other hand, applying the equivalence to the same value should, logically, return <code>true</code>:</p><pre><code># eq_user xvw xvw ;;
+- : bool = true
+# eq_user grm grm ;;
+- : bool = true
+# eq_user dpl dpl ;;
+- : bool = true</code></pre><p>Now that we can construct equivalences, by composition, that act on <b>products</b>, let's observe <a href="../As_decidable/index.html">Decidable</a> which will allow us to construct equivalences that act on sums!</p></header><div class="odoc-content"></div></body></html>

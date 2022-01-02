@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>As_divisible (postface.Postface_examples.Comparison_examples.As_divisible)</title><link rel="stylesheet" href="../../../../_odoc-theme/odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 2.0.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">postface</a> &#x00BB; <a href="../../index.html">Postface_examples</a> &#x00BB; <a href="../index.html">Comparison_examples</a> &#x00BB; As_divisible</nav><header class="odoc-preamble"><h1>Module <code><span>Comparison_examples.As_divisible</span></code></h1><p>Examples of using Comparison as a <a href="../../../Postface/Comparison/Divisible/index.html"><code>Postface.Comparison.Divisible</code></a></p><p>While we have seen that the implementations of <code>Divisible</code> for <a href="../../Predicate_examples/As_divisible/index.html">predicates</a> and for <a href="../../Equivalence_examples/As_divisible/index.html">equivalences</a> allow the construction of more complex predicates and equivalences for product types, respectively, the same is true for the implementation of Divisible for comparisons. But what does this mean in the case of a product?</p><p><em>The association rules may seem a bit strange, but this is because the monoid described by Ordering is an <b>idempotent monoid</b>, which is also sometimes called a <i>find-first</i>. Yeah when the first element of the operation is not the neutral-one, it takes it a reference.</em> In: <a href="../../Ordering_examples/As_monoid/index.html">Using ordering as a Monoid</a></p><p>As a result, the comparison function will depend on the order of comparison. Let us return to our previous examples. As for <a href="../../Predicate_examples/As_divisible/index.html">predicate</a>, let's re-use our type <code>user</code>.</p><pre><code># type user = {first_name: string; last_name: string; age: int; email: string} ;;
+type user = {
+  first_name : string;
+  last_name : string;
+  age : int;
+  email : string;
+}</code></pre><p>Our aim is to provide an comparison function between users. It is obviously possible to provide a direct implementation, but it would not take advantage of <code>Divisible</code>. To take advantage of <code>Divisible</code>, the first step is to normalise our user into a product, for this we can reuse the <code>user_to_couple</code> function we used in <a href="../../Predicate_examples/As_divisible/index.html">the predicate example</a>:</p><pre><code># let user_to_couple u = ((u.first_name, u.last_name), u.age), u.email ;;
+val user_to_couple : user -&gt; ((string * string) * int) * string = &lt;fun&gt;</code></pre><p>Now we just have to compose our comparisons to build a comparison between users! First, let's define some helpers to make the code more digestible.</p><pre><code># let int = from_stdlib Stdlib.Int.compare ;;
+val int : int Comparison.t = &lt;comparison&gt;
+# let string = from_stdlib Stdlib.String.compare ;;
+val string : string Comparison.t = &lt;comparison&gt;</code></pre><p>Now all we have to do is project our <code>user</code> into a couple (remember, it's just <code>contramap</code> and the <code>user_to_couple</code> function), and then we can chain our various comparisons functions with <code>&gt;*&lt;</code>:</p><pre><code># let cmp_user = user_to_couple &gt;$&lt; (string &gt;*&lt; string &gt;*&lt; int &gt;*&lt; string) ;;
+val cmp_user : user Comparison.t = &lt;comparison&gt;</code></pre><p>Fine, let's create some users and check that our function works.</p><pre><code># let mk_user first_name last_name age email = {first_name; last_name; age; email} ;;
+val mk_user : string -&gt; string -&gt; int -&gt; string -&gt; user = &lt;fun&gt;</code></pre><pre><code># let xvw = mk_user &quot;Xavier&quot; &quot;Vdw.&quot; 10 &quot;xavier@mail.org&quot; ;;
+val xvw : user =
+  {first_name = &quot;Xavier&quot;; last_name = &quot;Vdw.&quot;; age = 10;
+   email = &quot;xavier@mail.org&quot;}
+# let grm = mk_user &quot;Pierre&quot; &quot;R.&quot;  20 &quot;pierre@mail.org&quot; ;;
+val grm : user =
+  {first_name = &quot;Pierre&quot;; last_name = &quot;R.&quot;; age = 20;
+   email = &quot;pierre@mail.org&quot;}
+# let dpl = mk_user &quot;Didier&quot; &quot;P.&quot; 30 &quot;didier@mail.org&quot; ;;
+val dpl : user =
+  {first_name = &quot;Didier&quot;; last_name = &quot;P.&quot;; age = 30;
+   email = &quot;didier@mail.org&quot;}</code></pre><p>And this is the strange part, it is always the first element that will, in a way, decide the result of the comparison. We'll only deal with the latter if the previously compared element returns <code>Eq</code>:</p><pre><code># cmp_user xvw xvw ;;
+- : Ordering.t = Eq
+# cmp_user xvw grm ;;
+- : Ordering.t = Gt
+# cmp_user dpl grm ;;
+- : Ordering.t = Lt</code></pre><p>For this reason, a lot of care has been taken in the preamble to this example. <b>The order of the fields is important in the final result of the comparison</b>. For example, if I compare two users who have the same name but different ages (No matter what the email address is), it is the age that will determine the result of the comparison:</p><pre><code># cmp_user (mk_user &quot;a&quot; &quot;a&quot; 20 &quot;a&quot;) (mk_user &quot;a&quot; &quot;a&quot; 19 &quot;b&quot;) ;;
+- : Ordering.t = Gt</code></pre><p>This is why, unlike predicates and equivalences, which have a trivial compositional strategy (everything must equal <code>true</code>), the composition of comparison functions is probably less useful.</p></header><div class="odoc-content"></div></body></html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>As_divisible (postface.Postface_examples.Predicate_examples.As_divisible)</title><link rel="stylesheet" href="../../../../_odoc-theme/odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 2.0.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">postface</a> &#x00BB; <a href="../../index.html">Postface_examples</a> &#x00BB; <a href="../index.html">Predicate_examples</a> &#x00BB; As_divisible</nav><header class="odoc-preamble"><h1>Module <code><span>Predicate_examples.As_divisible</span></code></h1><p>Examples of using Predicates as a <a href="../../../Postface/Predicate/Divisible/index.html"><code>Postface.Predicate.Divisible</code></a></p><p>As we have seen in the <a href="../As_contravariant/index.html">exploitation of contravariant functors</a> for predicates, we can apply a predicate only on a fragment of data, we would like to be able to apply several predicates on several fragments of the same value. For example to validate all the fields.</p><p>For example, consider this somewhat naive representation of a user:</p><pre><code>type user =
+{ first_name : string
+; last_name : string
+; age : int
+; email : string
+}</code></pre><p>We can easily describe some predicates that validate each of the fields. Without much ado, we simply consider that for a <code>first_name</code> or <code>last_name</code> to be valid, it must be at least 2 characters long...</p><pre><code># let check_name name = Stdlib.String.length name &gt;= 2 ;;
+val check_name : string -&gt; bool = &lt;predicate&gt;</code></pre><p>Then it is assumed, again very naively, that the age must be greater than or equal to zero.</p><pre><code># let check_age age = age &gt;= 0 ;;
+val check_age : int -&gt; bool = &lt;predicate&gt;</code></pre><p>And for the email address, we'll just assume there's only one <code>&quot;@&quot;</code> in the text, again, security is not our priority in this example:</p><pre><code># let split = Stdlib.String.split_on_char '@' ;;
+val split : string -&gt; string list = &lt;fun&gt;
+# let check_email email = List.has_length 2 (split email)  ;;
+val check_email : string -&gt; bool = &lt;predicate&gt;</code></pre><p>We need to be able to compose our predicates to ensure that a value of type <code>user</code> is valid.</p><pre><code># let first_name {first_name; _} =  check_name first_name ;;
+val first_name : user -&gt; bool = &lt;predicate&gt;</code></pre><pre><code># let last_name {last_name; _} = check_name last_name ;;
+val last_name : user -&gt; bool = &lt;predicate&gt;</code></pre><pre><code># let age {age; _} = check_age age ;;
+val age : user -&gt; bool = &lt;predicate&gt;</code></pre><pre><code># let email {email; _} = check_email email ;;
+val email : user -&gt; bool = &lt;predicate&gt;</code></pre><p>And now we can wrap our predicates together to check that a user is valid!</p><pre><code># let check_user = first_name &amp;&amp; last_name &amp;&amp; age &amp;&amp; email ;;
+val check_user : user t = &lt;predicate&gt;</code></pre><p>We do have a predicate that can validate a user, for example:</p><pre><code># let mk_user first_name last_name age email = {first_name; last_name; age; email} ;;
+val mk_user : string -&gt; string -&gt; int -&gt; string -&gt; user = &lt;fun&gt;</code></pre><pre><code># let a_valid_user = mk_user &quot;Xavier&quot; &quot;Vdw&quot; 32 &quot;xaviervdw@mail.org&quot; ;;
+val a_valid_user : user =
+  {first_name = &quot;Xavier&quot;; last_name = &quot;Vdw&quot;; age = 32;
+   email = &quot;xaviervdw@mail.org&quot;}</code></pre><pre><code># let an_invalid_user = mk_user &quot;Xavier&quot; &quot;Vdw&quot; (-3) &quot;foo&quot; ;;
+val an_invalid_user : user =
+  {first_name = &quot;Xavier&quot;; last_name = &quot;Vdw&quot;; age = -3; email = &quot;foo&quot;}</code></pre><p>Let's test our predicates:</p><pre><code># check_user a_valid_user ;;
+- : bool = true
+# check_user an_invalid_user ;;
+- : bool = false</code></pre><p>Everything seems to work, but you have to admit that it's a bit boring... If only we had a function that allowed us to systematise the validation!</p><p>This the role of <a href="../../../Postface/Predicate/Divisible/index.html#val-divide">divide</a> (which has type <code>('a -&gt; 'b * 'c) -&gt; 'b t -&gt; 'c t -&gt; 'a t</code>). What we need is simply the possibility to change a <code>user</code> into a couple, nothing more simple:</p><pre><code>let user_to_couple { first_name; last_name; age; email } =
+((first_name, last_name), age), email
+;;</code></pre><pre><code># user_to_couple ;;
+- : user -&gt; ((string * string) * int) * string = &lt;fun&gt;</code></pre><p>And yes, a couple allows to represent a kind of heterogeneous list. So a couple of couples is also a couple. Logical!</p><pre><code>let check_user_using_divide =
+user_to_couple
+&gt;$&lt; (check_name &gt;*&lt; check_name &gt;*&lt; check_age &gt;*&lt; check_email)</code></pre><p>Let's test our predicates:</p><pre><code># check_user_using_divide a_valid_user ;;
+- : bool = true
+# check_user_using_divide an_invalid_user ;;
+- : bool = false</code></pre><p>Concretely, as long as we can correctly represent our type as a pair, we can arbitrarily compose predicates to validate <b>several</b> fragments of a value.</p><p>More generally, <code>Divisible</code> allows us to act on product types and the most generic and minimal product (of at least two elements, if the product as only one member, <code>Contravariant</code> is sufficient) is the couple as it allows encoding a more complex variety of product. Hence the need for a conversion function from <code>user</code> to <code>couple</code>. Interestingly, it is possible to process sums, using <a href="../As_decidable/index.html">Decidable</a>!</p></header><div class="odoc-content"></div></body></html>

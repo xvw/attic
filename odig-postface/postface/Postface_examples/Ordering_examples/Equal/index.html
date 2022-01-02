@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Equal (postface.Postface_examples.Ordering_examples.Equal)</title><link rel="stylesheet" href="../../../../_odoc-theme/odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 2.0.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../../index.html">postface</a> &#x00BB; <a href="../../index.html">Postface_examples</a> &#x00BB; <a href="../index.html">Ordering_examples</a> &#x00BB; Equal</nav><header class="odoc-preamble"><h1>Module <code><span>Ordering_examples.Equal</span></code></h1><p>Examples for <a href="../../../Postface/Ordering/index.html#val-equal"><code>Postface.Ordering.equal</code></a></p><p>Note that the <code>equal</code> function is used to test whether two orders are the same, they are not particularly related to <code>Eq</code>. The <code>equal</code> function will simply check that two orders have the same value.</p><p>All these assertions are therefore true:</p><pre><code># Ordering.(equal Eq Eq) ;;
+- : bool = true</code></pre><pre><code># Ordering.(equal Lt Lt) ;;
+- : bool = true</code></pre><pre><code># Ordering.(equal Gt Gt) ;;
+- : bool = true</code></pre><p>But these are false:</p><pre><code># Ordering.(equal Gt Eq) ;;
+- : bool = false</code></pre><pre><code># Ordering.(equal Lt Gt) ;;
+- : bool = false</code></pre><pre><code># Ordering.(equal Eq Lt) ;;
+- : bool = false</code></pre><p>Nothing too complicated.</p></header><div class="odoc-content"></div></body></html>
